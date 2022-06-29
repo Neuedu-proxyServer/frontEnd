@@ -2,6 +2,8 @@
 node_modules
 /dist
 日志.md
+index.html
+login.html
 
 # local env files
 .env.local
