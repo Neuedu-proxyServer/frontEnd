@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import user from './user';
+import search from './search';
 Vue.use(Vuex);
 // const actions = {
 
@@ -14,6 +15,7 @@ Vue.use(Vuex);
 // const getters = {};
 export default new Vuex.Store({
   modules: {
-    user
+    user,
+    search
   }
 });

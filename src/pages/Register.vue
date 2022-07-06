@@ -31,7 +31,6 @@
 </template>
  
 <script>
-import axios from "axios";
 export default {
   name: "Register",
   data() {
@@ -54,12 +53,12 @@ export default {
   methods: {
     async getCode() {
       try {
-        const { user: { email } } = this
+        const { user: { email, username } } = this
         email && await $store.dispatch('getCode', user.email)
         //这里实现自动填充验证码，后期删去
         this.code = this.$store.user.state.code
       } catch (error) {
-
+        console.log(error)
       }
 
     },
@@ -82,7 +81,7 @@ export default {
         else {
           try {
             //如果成功，路由跳转到登入页面
-            await this.$store.dispatch('userRegister', { email, password, code })
+            await this.$store.dispatch('userRegister', { username, email, password })
             this.$router.push('/login')
           } catch (error) {
             //这里得看后端接口咋写嘞，先占个位

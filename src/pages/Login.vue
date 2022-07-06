@@ -48,9 +48,10 @@ export default {
       } else {
         try {
           await this.$store.dispatch('userLogin', { email, password })
+          this.$router.push('/home')
         } catch (error) {
           //home谁都能进，这里得动态的改变右上角的状态
-          this.$router.push('/home')
+          console.log(error)
         }
 
       }

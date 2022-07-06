@@ -61,7 +61,7 @@
            name: 'projectManage',
            params:{}}">
       <i class="el-icon-document"></i>
-      <span slot="title">项目管理</span>
+      <span slot="title">购物车</span>
     </el-menu-item>
     <!-- <button class="fold-btn">
       <i :class="iconClass"></i>

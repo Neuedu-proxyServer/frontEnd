@@ -18,22 +18,8 @@
               <el-form-item label="昵称" prop="nickname">
                 <el-input v-model="infoForm.nickname" size="mini" placeholder="请输入昵称"></el-input>
               </el-form-item>
-              <el-form-item label="投资年限" prop="touziyear">
-                <el-select v-model="infoForm.touziyear" size="mini" placeholder="请选择投资年限">
-                  <el-option label="1年" value="1"></el-option>
-                  <el-option label="2年" value="2"></el-option>
-                  <el-option label="3年" value="3"></el-option>
-                  <el-option label="4年" value="4"></el-option>
-                  <el-option label="5年" value="5"></el-option>
-                  <el-option label="6年" value="6"></el-option>
-                  <el-option label="7年" value="7"></el-option>
-                  <el-option label="8年" value="8"></el-option>
-                  <el-option label="9年" value="9"></el-option>
-                  <el-option label="10年" value="10"></el-option>
-                </el-select>
-              </el-form-item>
               <el-form-item label="绑定邮箱" prop="email">
-                <el-input v-model="infoForm.email" size="mini" placeholder="请输入绑定邮箱"></el-input>
+                <el-input v-model="infoForm.email" size="mini" disabled placeholder="绑定的邮箱"></el-input>
               </el-form-item>
               <el-form-item label="绑定手机" prop="telphone">
                 <el-input v-model="infoForm.telphone" size="mini" placeholder="请输入绑定手机"></el-input>
@@ -57,6 +43,9 @@
                 ref="pwdForm"
                 label-width="100px"
               >
+                <el-form-item label="邮箱" prop="email">
+                  <el-input v-model="infoForm.email" size="mini" disabled placeholder="邮箱"></el-input>
+                </el-form-item>
                 <el-form-item label="原密码" prop="password">
                   <el-input
                     type="password"
@@ -95,40 +84,18 @@
 
         <el-col :span="8">
           <div class="area">
-            <div class="phonearea">
-              <p class="title">手机服务</p>
-              <el-form
-                class="form"
-                :model="phoneForm"
-                :rules="phoneRules"
-                ref="phoneForm"
-                label-width="110px"
-              >
-                <el-form-item label="当前绑定手机" prop="phone">
-                  <el-input v-model="phoneForm.phone" size="mini" placeholder></el-input>
-                </el-form-item>
-                <el-form-item label="基础短信服务" prop="baseType">
-                  <el-checkbox-group v-model="phoneForm.baseType" class="phoneGroup">
-                    <el-checkbox label="网站密码找回" name="baseType"></el-checkbox>
-                    <el-checkbox label="提现申请短信验证" name="baseType"></el-checkbox>
-                    <el-checkbox label="提现申请提醒" name="baseType"></el-checkbox>
-                  </el-checkbox-group>
-                </el-form-item>
-                <el-form-item label="可选短信服务" prop="changeType">
-                  <el-checkbox-group v-model="phoneForm.changeType" class="phoneGroup">
-                    <el-checkbox label="投标通知" name="changeType"></el-checkbox>
-                    <el-checkbox label="满标/流标/撤销通知" name="changeType"></el-checkbox>
-                    <el-checkbox label="回款通知" name="changeType"></el-checkbox>
-                    <el-checkbox label="本息保障通知" name="changeType"></el-checkbox>
-                    <el-checkbox label="优质标提醒通知" name="changeType"></el-checkbox>
-                  </el-checkbox-group>
-                </el-form-item>
-
-                <el-form-item>
-                  <el-button type="primary" @click="submitForm('phoneForm')">提交</el-button>
-                  <el-button @click="resetForm('phoneForm')">重置</el-button>
-                </el-form-item>
-              </el-form>
+            <p class="title">头像更改</p>
+            <div class="touxiang">
+              <picture-cut style="margin-bottom: 25px" :headerUrl="headerUrl" @save="saveNewPic">
+                <a-progress
+                  style="width:100%"
+                  size="small"
+                  strokeColor="#8cc269"
+                  slot="progress"
+                  v-show="showAvatarLoadingProgress"
+                  :percent="avatarLoadingProgress"
+                />
+              </picture-cut>
             </div>
           </div>
         </el-col>
@@ -138,10 +105,11 @@
 </template>
 
 <script>
-import * as mutils from '@/plugins/mUtils'
-
+import * as mutils from '@/plugins/mUtils';
+import PictureCut from '../../components/picture-cut/PictureCut.vue';
 export default {
   name: "infoModify",
+  components: { PictureCut },
   data() {
     // 附带callback(),是在明确通过验证的情况下去掉输入框上的loading
     let validateEmail = (rule, value, callback) => {
@@ -156,18 +124,7 @@ export default {
         callback();
       }
     };
-    let validatePhone = (rule, value, callback) => {
-      if (value == '') {
-        callback(new Error('请输入手机号码~'));
-      } {
-        let phoneRegex = /^1[34578]\d{9}$/;
-        if (!phoneRegex.test(value)) {
-          callback(new Error('手机号码格式不正确！'))
-        } else {
-          callback();
-        }
-      }
-    };
+
     // validateField:对部分表单字段进行校验的方法
     let validateNewpassword = (rule, value, callback) => {
       if (value === '') {
@@ -189,11 +146,12 @@ export default {
       }
     };
     return {
+      avatarLoadingProgress: 0,         // 上传进度
+      showAvatarLoadingProgress: false, // 是否显示进度条
       infoForm: {
         username: '',
         nickname: '',
-        touziyear: '',
-        email: '',
+        email: this.$store.state.user.userInfo.email,
         telphone: ''
       },
       pwdForm: {
@@ -201,25 +159,21 @@ export default {
         newpassword: '',
         surepassword: ''
       },
-      phoneForm: {
-        phone: '',
-        baseType: [],
-        changeType: []
-      },
+
       infoRules: {
         nickname: [
           { required: true, message: '请输入昵称', trigger: 'blur' },
           { min: 2, max: 8, message: '长度在 2 到 8 个字符', trigger: 'blur' }
         ],
-        touziyear: [
-          { required: true, message: '请选择投资年限', trigger: 'change' }
-        ],
+        // touziyear: [
+        //   { required: true, message: '请选择投资年限', trigger: 'change' }
+        // ],
         email: [
           { required: true, validator: validateEmail, trigger: 'blur' }
         ],
-        telphone: [
-          { required: true, validator: validatePhone, trigger: 'blur' },
-        ],
+        // telphone: [
+        //   { required: true, validator: validatePhone, trigger: 'blur' },
+        // ],
       },
       pwdRules: {
         password: [
@@ -232,17 +186,7 @@ export default {
           { required: true, validator: validateSurepassword, trigger: 'blur' },
         ],
       },
-      phoneRules: {
-        phone: [
-          { required: true, validator: validatePhone, trigger: 'blur' },
-        ],
-        baseType: [
-          { type: 'array', required: true, message: '请至少选择一个基础短信服务', trigger: 'change' }
-        ],
-        changeType: [
-          { type: 'array', required: true, message: '请至少选择一个可选短信服务', trigger: 'change' }
-        ],
-      },
+
 
     };
 
@@ -254,6 +198,11 @@ export default {
   mounted() {
     // mutils.setContentHeight(this,this.$refs.fillcontain,170);
   },
+  computed: {
+    headerUrl() {
+      return this.$store.state.user.userInfo.headerUrl
+    }
+  },
   methods: {
     showMessage(type, message) {
       this.$message({
@@ -261,28 +210,33 @@ export default {
         message: message
       });
     },
-    showUsername() {
-      let userinfo = mutils.getStore('userinfo');
-      this.infoForm.username = userinfo.username;
-    },
+    // showUsername() {
+    //   let userinfo = mutils.getStore('userinfo');
+    //   this.infoForm.username = userinfo.username;
+    // },
     submitForm(formName) {
-      this.$refs[formName].validate((valid) => {
+      this.$refs[formName].validate(async (valid) => {
         if (valid) {
           if (formName == 'pwdForm') {
-            this.showMessage('success', '修改密码成功~');
+            // 
+            try {
+              await this.$store.dispatch('modifyUserPass', {
+                email: this.infoForm.email,
+                password: this.pwdForm.password,
+                newPassword: this.pwdForm.newpassword
+              })
+              this.showMessage('success', '修改密码成功~');
+            } catch (error) {
+              //下面显示错误信息
+              console.log(error)
+              this.showMessage('failed', '修改密码失败TT')
+            }
+
           } else if (formName == 'infoForm') { // 判断手机服务是否为空
             this.phoneForm.phone = this.infoForm.telphone;
             for (let key in this.phoneForm) {
               if (this.phoneForm[key] == '') {
                 this.showMessage('warning', '请您选择手机服务~');
-                return;
-              }
-            }
-          } else if (formName == 'phoneForm') {// 判断修改信息是否为空
-            this.infoForm.telphone = this.phoneForm.phone;
-            for (let key in this.infoForm) {
-              if (this.infoForm[key] == '') {
-                this.showMessage('warning', '请您修改相关信息~');
                 return;
               }
             }
@@ -299,6 +253,102 @@ export default {
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();
+    },
+    saveNewPic(data, done) {
+      let avatarNewPaths = [];
+      let promiseArr = [];
+      let tempPicName = CONST.guid() + ".jpg";
+
+      let p = new Promise((resolve) => {
+        let that = this
+        axios({
+          url: "/cos/credential",
+          method: "GET",
+          params: {
+            type: "avatar",
+            fileName: tempPicName,
+          },
+        })
+          .then(function (response) {
+            let bucket = response.data.msg.bucket
+            let region = response.data.msg.region
+            let tempSecret = response.data.msg.credential;
+
+            const COS = require("cos-js-sdk-v5");
+            that.cos = new COS({
+              getAuthorization: (options, callback) => {
+                let data = {
+                  TmpSecretId: tempSecret.credentials.tmpSecretId,
+                  TmpSecretKey: tempSecret.credentials.tmpSecretKey,
+                  XCosSecurityToken: tempSecret.credentials.sessionToken,
+                  StartTime: tempSecret.startTime, // 时间戳，单位秒
+                  ExpiredTime: tempSecret.expiredTime, // 时间戳，单位秒
+                };
+                callback(data);
+              },
+            });
+
+            that.cos.putObject(
+              {
+                Bucket: bucket,
+                Region: region,
+                Key: that.$store.state.myUserID + "/" + tempPicName,
+                Body: CONST.dataURLtoFile(data),
+                onProgress(params) {
+                  that.avatarLoadingProgress = Math.floor(params.percent * 100)
+                  that.showAvatarLoadingProgress = true
+                }
+              },
+              function (err, data) {
+                if (err) {
+                  console.log(err);
+                  resolve(avatarNewPaths.push({
+                    success: false,
+                    msg: '文件上传失败!'
+                  }));
+                  return;
+                }
+                resolve(avatarNewPaths.push({
+                  success: true,
+                  msg: "https://" + data.Location
+                }));
+              }
+            );
+          });
+      });
+      promiseArr.push(p);
+
+      Promise.all(promiseArr).then(() => {
+        if (!avatarNewPaths[0].success) {
+          VantToast({
+            message: "头像上传失败",
+            icon: "cross",
+          });
+          done()
+        } else {
+          let that = this
+          axios({
+            url: "/user/updateHeader",
+            method: "POST",
+            data: {
+              headerUrl: avatarNewPaths[0].msg,
+            },
+          })
+            .then(function () {
+              VantToast({
+                message: "更新成功",
+                icon: "success",
+              });
+              that.user.headerUrl = avatarNewPaths[0].msg;
+              that.$forceUpdate();
+              that.$emit("myNewAvatar", avatarNewPaths[0].msg);
+            });
+          done()
+        }
+
+        this.avatarLoadingProgress = 0
+        this.showAvatarLoadingProgress = false
+      });
     },
   }
 }
@@ -328,7 +378,7 @@ export default {
     height: 100%;
     font-size: 14px;
     padding: 10px;
-    .form {
+    .touxiang {
       width: 90%;
       margin-top: 20px;
     }

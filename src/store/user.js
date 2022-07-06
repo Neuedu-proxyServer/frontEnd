@@ -3,20 +3,30 @@ import {
   reqUserRegister,
   reqUserLogin,
   reqUserInfo,
-  reqUserLogout
+  reqUserLogout,
+  reqModifyPass
 } from '../api/index.js';
 import {
   setToken,
   getToken,
   removeToken
 } from '../utils/token';
+import {
+  setEmail,
+  getEmail,
+  removeEmail
+} from '../utils/userInfo';
 //登入注册模块
-const state = {
+let state = {
   code: "",
+  //这里为用户名
   token: getToken(),
-  userInfo: {}
+  userInfo: {
+    headerUrl: "@/assets/images/photoSmall.png",
+    email: getEmail()
+  }
 }
-const actions = {
+let actions = {
   async getCode({
     commit
   }, email) {
@@ -34,7 +44,9 @@ const actions = {
     commit
   }, data) {
     let res = await reqUserRegister(data)
-    if (res.code == 200) {
+    console.log(res)
+    if (res.status == 200) {
+      //commit('USERREGISTER', data.email)
       return 'ok'
     } else {
       return Promise.reject(new Error("注册失败"))
@@ -45,10 +57,13 @@ const actions = {
     commit
   }, data) {
     let res = await reqUserLogin(data)
-    if (res.code == 200) {
-      //拿token
-      commit('USERLOGIN', res.data.token)
-      setToken(res.data.token)
+    if (res.status == 200) {
+      commit('USERLOGIN', {
+        token: res.data,
+        email: data.email
+      })
+      setToken(res.data)
+      setEmail(data.email)
       return 'ok'
     } else {
       return Promise.reject(new Error("登入失败"))
@@ -68,33 +83,48 @@ const actions = {
   async userLogout({
     commit
   }) {
-    let res = await reqUserLogout()
-    if (res.code == 200) {
-      commit('USERLOGOUT')
-      return 'ok'
+    // let res = await reqUserLogout()
+
+    commit('USERLOGOUT')
+    return 'ok'
+  },
+  async modifyUserPass({
+    commit
+  }, data) {
+    let res = await reqModifyPass(data)
+    console.log(res)
+    if (res.status == 200) {
+      // commit()要不要重新登入？？
     } else {
-      return Promise.reject('退出失败')
+      return Promise.reject("修改密码失败")
     }
   }
 }
-const mutations = {
+let mutations = {
   GETCODE(state, code) {
     state.code = code
   },
-  USERLOGIN(state, token) {
-    state.token = token
+  USERLOGIN(state, info) {
+    state.token = info.token
+    state.userInfo.email = info.email
   },
-  GETUSERINFO(state, info) {
-    state.info = info
+  GETUSERINFO(state, userInfo) {
+    state.userInfo = userInfo
   },
   USERLOGOUT(state) {
     state.token = ''
     state.userInfo = {}
     removeToken()
-  }
+    removeEmail()
+    console.log('end')
+  },
+  // USERREGISTER(state, email) {
+
+  // }
+
 }
 
-const getters = {};
+let getters = {};
 export default {
   actions,
   mutations,

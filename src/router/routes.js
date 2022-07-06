@@ -7,6 +7,10 @@ import ProjectDetail from '../pages/projectManage/ProjectDetail.vue'
 import InfoShow from '../pages/infoManage/InfoShow.vue';
 import InfoModify from '../pages/infoManage/InfoModify.vue';
 import Error from '../pages/error/Error.vue';
+import GoodsList from '../pages/goods_list/GoodsList.vue';
+import GoodsDetail from '../pages/goods_detail/GoodsDetail.vue';
+import ShopCart from '../pages/shopCart/ShopCart.vue';
+import AddCartSuccess from '../pages/addCartSuccess/AddCartSuccess.vue';
 export const routes = [
 
   {
@@ -23,6 +27,7 @@ export const routes = [
     path: "/home",
     name: "home",
     component: Home,
+    redirect: "/home/index",
     children: [ //通过children配置子级路由
       {
         path: "infoShow",
@@ -45,10 +50,28 @@ export const routes = [
         component: ProjectDetail,
       },
       {
+        path: "goods_list",
+        name: "goodsList",
+        component: GoodsList
+      },
+      {
+        path: "goods_detail/:goods_id",
+        name: "goods_detail",
+        component: GoodsDetail
+      }, {
+        path: "shopCart",
+        name: "shopCart",
+        component: ShopCart
+      }, {
+        path: "addCartSuccess",
+        name: "addCartSuccess",
+        component: AddCartSuccess
+      },
+      {
         path: "index",
         name: "index",
         component: Index,
-      },
+      }
     ]
   },
 

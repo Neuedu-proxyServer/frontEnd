@@ -5,88 +5,142 @@
         <!-- <div class="grid-content bg-purple"></div> -->
         <ul>
           <li>
-            <a class="yun">华科云</a>
+            <a class="yun">Mbao</a>
           </li>
           <li>
-            <a href="#">总览</a>&nbsp;
-            <a class="style_red">&nbsp;云产品</a>
+            <a href="#"></a>&nbsp;
+            <a class="style_red">&nbsp;</a>
           </li>
         </ul>
       </el-col>
       <el-col :span="8" class="fm">
         <!-- <div class="grid-content bg-purple-light"></div> -->
         <!-- <a-input-search placeholder="input search text"  enter-button @search="onSearch" /> -->
-        <a-input-search
+        <!-- <a-input-search
           placeholder="搜索文档、产品..."
           :loading="searchInput.loading"
           :enterButton="false"
           @search="onSearch"
-        ></a-input-search>
+        ></a-input-search>-->
+        <el-autocomplete
+          v-model="state"
+          :debounce="1000"
+          :fetch-suggestions="querySearchAsync"
+          placeholder="请输入内容"
+          @select="handleSelect"
+        >
+          <template slot-scope="{ item }">
+            <div class="name">{{ item.goods_name }}</div>
+            <!-- <span class="addr">{{ item.goods_id }}</span> -->
+          </template>
+        </el-autocomplete>
       </el-col>
       <el-col :span="6" class="fr">
         <!-- <div class="grid-content bg-purple"></div> -->
         <ul>
           <li>
             <!-- 换成图标 -->
-            <a href>站内信</a>
+            <a href></a>
           </li>
           <li>
-            <a href class="arrow-icon">工具</a>
+            <a href class="arrow-icon"></a>
           </li>
           <li>
-            <a href>费用</a>
+            <a href></a>
           </li>
         </ul>
       </el-col>
       <!-- 判断用户是否登入，登入时有token -->
-      <el-col :span="3" class="photo" v-if="$store.state.user.token">
+      <el-col :span="3" class="photo" v-if="!$store.state.user.token">
         <el-dropdown>
           <span class="el-dropdown-link">
             <img :src="userImg" alt />
           </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item>个人中心</el-dropdown-item>
-            <el-dropdown-item @command="logout">退出</el-dropdown-item>
+            <el-dropdown-item>
+              <button @click="toShopCart">我的购物车</button>
+            </el-dropdown-item>
+            <el-dropdown-item>
+              <button @click="logout">退出</button>
+            </el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </el-col>
       <el-col v-else :span="3">
-        <button></button>
+        <button class="login" @click="toLogin">登录</button>
+        <button class="register" @click="toRegister">注册</button>
       </el-col>
     </el-row>
   </header>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 export default {
   name: "HomeHeader",
   data() {
     return {
-      searchInput: {
-        text: '正在搜索',
-        loading: false,
-        enterButton: false,
-        waitFlag: false
-      },
+      state: '',
+      timeout: null,
+      // searchInput: {
+      //   text: '正在搜索',
+      //   loading: false,
+      //   enterButton: false,
+      //   waitFlag: false
+      // },
       userImg: require("@/assets/images/photoSmall.png")
     }
   },
   mounted() {
-    //this.$store.dispatch('getUserInfo')
+
+  },
+  computed: {
+    ...mapGetters(['goodsArr'])
   },
   methods: {
-    onSearch(value, event) {
-      this.searchInput.loading = true
-      //console.log(value, event)
-      setTimeout(() => this.searchInput.loading = false, 2000)
+    // onSearch(value, event) {
+    //   this.searchInput.loading = true
+    //   //console.log(value, event)
+    //   setTimeout(() => this.searchInput.loading = false, 2000)
+    // },
+
+    toLogin() {
+      this.$router.push('/login')
     },
-    async logout() {
+    toRegister() {
+      this.$router.push('/register')
+    },
+    toShopCart() {
+      this.$router.push({ name: "shopCart" })
+    },
+    logout() {
       try {
         //退出成功回到首页
-        this.$store.dispatch('USERLOGOUT')
-        this.$router.push('/home')
+        this.$store.dispatch('userLogout')
+        this.$router.push('/login')
       } catch (error) {
+        console.log(error)
+      }
 
+    },
+    async querySearchAsync(query, cb) {
+      try {
+        if (this.state)
+          await this.$store.dispatch('getSearchInfo', query)
+        // console.log(query)
+        cb(this.goodsArr)
+      } catch (error) {
+        console.log(error)
+      }
+
+    },
+    handleSelect(item) {
+      try {
+        console.log(item);
+        //await this.$store.dispatch('toDetail', item.goods_id)
+        this.$router.push({ name: 'goods_detail', params: { goods_id: item.goods_id } })
+      } catch (error) {
+        alert(error)
       }
 
     }
@@ -116,7 +170,7 @@ header {
     margin: 0;
     padding: 0 14px;
     line-height: 56px;
-    border-right: 1.5px solid #666666;
+    // border-right: 1.5px solid #666666;
     a {
       color: #f1f1f1;
     }
@@ -159,6 +213,13 @@ header {
         border-radius: 50%;
       }
     }
+  }
+  .login {
+    background-color: #052b5e;
+    margin-right: 20px;
+  }
+  .register {
+    background-color: #052b5e;
   }
 }
 </style>
